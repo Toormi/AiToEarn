@@ -1,0 +1,1708 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AiToEarn — Architecture Dossier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0f0d0a;
+    --ink-2:      #15120d;
+    --ink-3:      #1d1913;
+    --paper:      #f3ead4;
+    --paper-2:    #e7dcbf;
+    --rule:       #2c261c;
+    --rule-soft:  #221d15;
+    --amber:      #ffb627;
+    --amber-deep: #d18a00;
+    --cyan:       #6fe1f0;
+    --rust:       #c44a2c;
+    --green:      #8db75e;
+    --fg:         #f1e9d4;
+    --fg-mute:    #9a8f74;
+    --fg-fade:    #5e553f;
+    --serif:      'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
+    --sans:       'Manrope', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    --mono:       'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,182,39,.08), transparent 60%),
+      linear-gradient(transparent 49.5px, rgba(241,233,212,.025) 49.5px, rgba(241,233,212,.025) 50px, transparent 50px),
+      linear-gradient(90deg, transparent 49.5px, rgba(241,233,212,.025) 49.5px, rgba(241,233,212,.025) 50px, transparent 50px);
+    background-size: 100% 100%, 50px 50px, 50px 50px;
+    background-attachment: fixed;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 0%, transparent 0%, rgba(15,13,10,.55) 80%);
+    z-index: 0;
+  }
+
+  ::selection { background: var(--amber); color: var(--ink); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--ink-2); }
+  ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--amber-deep); }
+
+  a { color: var(--amber); text-decoration: none; }
+  a:hover { color: var(--cyan); }
+
+  .stage {
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 56px 40px 120px;
+  }
+
+  /* ──────────── TOP META BAR ──────────── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 14px;
+    margin-bottom: 64px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--fg-mute);
+  }
+  .topbar .id { color: var(--amber); }
+  .topbar .blink { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 8px var(--green); animation: pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  /* ──────────── HERO ──────────── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+    margin-bottom: 56px;
+    animation: rise .9s cubic-bezier(.2,.7,.1,1) both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(28px); } }
+
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero .eyebrow::before {
+    content: '';
+    width: 28px; height: 1px;
+    background: var(--amber);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 360;
+    font-size: clamp(56px, 9vw, 132px);
+    line-height: .9;
+    letter-spacing: -0.035em;
+    margin: 0;
+    color: var(--paper);
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .hero h1 .ital {
+    font-style: italic;
+    font-weight: 320;
+    color: var(--amber);
+  }
+
+  .hero .lede {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--fg);
+    margin: 28px 0 0;
+    max-width: 620px;
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .hero-side {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-mute);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .hero-side .ticket {
+    border: 1px solid var(--rule);
+    padding: 10px 14px;
+    background: var(--ink-2);
+  }
+  .hero-side .ticket strong {
+    display: block;
+    color: var(--paper);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* ──────────── STATS STRIP ──────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 36px 0 96px;
+  }
+  .stats .cell {
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .stats .cell:last-child { border-right: 0; }
+  .stats .label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    margin-bottom: 14px;
+  }
+  .stats .num {
+    font-family: var(--serif);
+    font-weight: 350;
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+    font-variation-settings: "opsz" 144;
+  }
+  .stats .num .unit {
+    font-size: 18px;
+    color: var(--amber);
+    font-style: italic;
+    margin-left: 4px;
+    letter-spacing: 0;
+  }
+  .stats .cell:nth-child(2) .num { color: var(--amber); }
+  .stats .cell:nth-child(4) .num { color: var(--cyan); }
+
+  /* ──────────── SECTION CHROME ──────────── */
+  section {
+    margin: 0 0 112px;
+    position: relative;
+  }
+  .sect-head {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    align-items: start;
+    margin-bottom: 44px;
+    border-top: 1px solid var(--rule);
+    padding-top: 40px;
+  }
+  .sect-num {
+    font-family: var(--serif);
+    font-weight: 280;
+    font-style: italic;
+    font-size: 100px;
+    line-height: .85;
+    color: var(--amber);
+    letter-spacing: -0.04em;
+    font-variation-settings: "opsz" 144;
+  }
+  .sect-num small {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-mute);
+    font-style: normal;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 14px;
+    font-weight: 500;
+  }
+  .sect-title {
+    font-family: var(--serif);
+    font-weight: 380;
+    font-size: 44px;
+    line-height: 1.05;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+    margin: 8px 0 18px;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .sect-title em {
+    color: var(--amber);
+    font-style: italic;
+    font-weight: 340;
+  }
+  .sect-kicker {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--fg);
+    font-weight: 300;
+    max-width: 720px;
+  }
+
+  /* ──────────── SVG MASTERPLAN ──────────── */
+  .masterplan {
+    background: var(--ink-2);
+    border: 1px solid var(--rule);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .masterplan::before {
+    content: 'BLUEPRINT · 01';
+    position: absolute;
+    top: 16px; left: 18px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--fg-fade);
+    z-index: 2;
+  }
+  .masterplan::after {
+    content: 'AGENT × MCP × MULTI-CHANNEL';
+    position: absolute;
+    top: 16px; right: 18px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--fg-fade);
+    z-index: 2;
+  }
+  .masterplan svg { display: block; width: 100%; height: auto; }
+
+  /* ──────────── 3 SUB-PROJECT CARDS ──────────── */
+  .triad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+    background: var(--ink-2);
+  }
+  .triad .card {
+    padding: 36px 32px 32px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+    transition: background .3s ease;
+  }
+  .triad .card:last-child { border-right: 0; }
+  .triad .card:hover { background: var(--ink-3); }
+  .triad .card .role {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 14px;
+  }
+  .triad .card h3 {
+    font-family: var(--serif);
+    font-weight: 360;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--paper);
+    margin: 0 0 8px;
+    font-variation-settings: "opsz" 96;
+    letter-spacing: -0.01em;
+  }
+  .triad .card .tech {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--fg-mute);
+    margin-bottom: 22px;
+  }
+  .triad .card .desc {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--fg);
+    margin-bottom: 24px;
+  }
+  .triad .card .tree {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.85;
+    color: var(--fg-mute);
+    padding-top: 18px;
+    border-top: 1px dashed var(--rule);
+  }
+  .triad .card .tree .root { color: var(--paper); }
+  .triad .card .tree .hi { color: var(--amber); }
+  .triad .card .pill {
+    position: absolute;
+    top: 32px; right: 28px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--fg-fade);
+  }
+
+  /* ──────────── BACKEND DETAIL ──────────── */
+  .twin {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 64px;
+  }
+  .panel {
+    background: var(--ink-2);
+    border: 1px solid var(--rule);
+    padding: 32px 30px;
+    position: relative;
+  }
+  .panel .tag {
+    position: absolute;
+    top: 0; left: 24px;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    background: var(--ink);
+    padding: 0 12px;
+  }
+  .panel h4 {
+    font-family: var(--serif);
+    font-weight: 380;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--paper);
+    margin: 8px 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .panel .sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--amber);
+    margin-bottom: 18px;
+  }
+  .panel p { color: var(--fg); font-size: 14.5px; }
+  .panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    font-size: 13.5px;
+  }
+  .panel ul li {
+    padding: 8px 0 8px 26px;
+    border-top: 1px dotted var(--rule);
+    position: relative;
+    color: var(--fg);
+  }
+  .panel ul li:last-child { padding-bottom: 0; }
+  .panel ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--amber);
+    font-family: var(--mono);
+  }
+  .panel ul li code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    background: rgba(111,225,240,.06);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  /* channel tree visualization */
+  .channel-tree {
+    background: var(--ink-2);
+    border: 1px solid var(--rule);
+    padding: 36px 40px;
+    margin-bottom: 48px;
+  }
+  .channel-tree h5 {
+    font-family: var(--serif);
+    font-size: 24px;
+    margin: 0 0 6px;
+    color: var(--paper);
+    font-weight: 380;
+  }
+  .channel-tree .crumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-mute);
+    letter-spacing: 0.15em;
+    margin-bottom: 28px;
+  }
+  .tree-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 28px;
+  }
+  .tree-col h6 {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tree-col ul { list-style: none; padding: 0; margin: 0; }
+  .tree-col li {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--fg);
+    padding: 5px 0;
+    line-height: 1.4;
+  }
+  .tree-col li small {
+    display: block;
+    font-family: var(--sans);
+    font-size: 11.5px;
+    color: var(--fg-mute);
+    margin-top: 2px;
+    letter-spacing: 0;
+  }
+  .tree-col li.star {
+    color: var(--amber);
+    font-weight: 600;
+  }
+  .tree-col li.star small { color: var(--paper); font-style: italic; font-family: var(--serif); }
+
+  /* ──────────── PLATFORM CHIPS GRID ──────────── */
+  .plat-section {
+    background: linear-gradient(180deg, var(--ink-2), var(--ink));
+    border: 1px solid var(--rule);
+    padding: 40px;
+  }
+  .plat-section h5 {
+    font-family: var(--serif);
+    font-size: 26px;
+    margin: 0 0 8px;
+    color: var(--paper);
+    font-weight: 380;
+  }
+  .plat-section h5 em {
+    color: var(--amber);
+    font-style: italic;
+    font-weight: 350;
+  }
+  .plat-section .cap {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--fg-mute);
+    font-size: 15px;
+    margin-bottom: 30px;
+  }
+  .plat-bands {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px 30px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .band-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    text-align: right;
+    border-right: 1px solid var(--rule);
+    padding-right: 16px;
+    line-height: 1.4;
+  }
+  .band-label strong {
+    display: block;
+    color: var(--amber);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-bottom: 4px;
+    font-weight: 400;
+  }
+  .band-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 11px;
+    border-radius: 999px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--paper);
+    background: var(--ink-3);
+    border: 1px solid var(--rule);
+    transition: transform .2s ease, border-color .2s ease;
+    cursor: default;
+  }
+  .chip:hover { transform: translateY(-2px); border-color: var(--amber); }
+  .chip .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 2px var(--ink-2);
+  }
+  .chip.douyin { color: #FE2C55; }
+  .chip.kwai { color: #FF6A00; }
+  .chip.bilibili { color: #00A1D6; }
+  .chip.xhs { color: #FF2442; }
+  .chip.shipinhao { color: #07C160; }
+  .chip.wxgzh { color: #07C160; }
+  .chip.youtube { color: #FF3D3D; }
+  .chip.tiktok { color: #25F4EE; }
+  .chip.instagram { color: #E4405F; }
+  .chip.facebook { color: #1877F2; }
+  .chip.twitter { color: #f1e9d4; }
+  .chip.threads { color: #c2c2c2; }
+  .chip.linkedin { color: #0A66C2; }
+  .chip.pinterest { color: #E60023; }
+  .chip.gbusiness { color: #4285F4; }
+
+  /* ──────────── LIBS CLOUD ──────────── */
+  .libs {
+    margin-top: 56px;
+  }
+  .libs h5 {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--paper);
+    font-weight: 380;
+    margin: 0 0 18px;
+  }
+  .libs-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .libs-cloud .lib {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 6px 11px;
+    border: 1px solid var(--rule);
+    color: var(--fg);
+    background: var(--ink-2);
+    transition: all .2s ease;
+  }
+  .libs-cloud .lib:hover { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+  .libs-cloud .lib.hi { color: var(--amber); border-color: var(--amber-deep); background: rgba(255,182,39,.05); }
+
+  /* ──────────── COMPARISON (Electron vs Backend) ──────────── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    background: var(--ink-2);
+    border: 1px solid var(--rule);
+    position: relative;
+  }
+  .compare .side {
+    padding: 40px 36px;
+    position: relative;
+  }
+  .compare .side:first-child { border-right: 1px dashed var(--rule); }
+  .compare .vs {
+    background: var(--ink-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 320;
+    font-size: 44px;
+    color: var(--amber);
+    border-left: 1px dashed var(--rule);
+    border-right: 1px dashed var(--rule);
+  }
+  .side .ctx {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    margin-bottom: 12px;
+  }
+  .side h5 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 380;
+    color: var(--paper);
+    margin: 0 0 6px;
+    line-height: 1.15;
+  }
+  .side .note {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--amber);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .side p {
+    font-size: 14px;
+    color: var(--fg);
+    line-height: 1.65;
+    margin: 0 0 22px;
+  }
+  .side .chip-rack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* ──────────── ENTRY POINTS ──────────── */
+  .entries {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+  }
+  .entry {
+    padding: 28px 22px;
+    border-right: 1px solid var(--rule);
+    background: var(--ink-2);
+    position: relative;
+    transition: background .25s ease;
+    min-height: 200px;
+  }
+  .entry:last-child { border-right: 0; }
+  .entry:hover { background: var(--ink-3); }
+  .entry .idx {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 30px;
+    color: var(--amber);
+    font-weight: 320;
+    line-height: 1;
+    margin-bottom: 18px;
+  }
+  .entry h6 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 19px;
+    color: var(--paper);
+    margin: 0 0 8px;
+    line-height: 1.15;
+  }
+  .entry p {
+    font-size: 12.5px;
+    color: var(--fg-mute);
+    line-height: 1.5;
+    margin: 0 0 14px;
+  }
+  .entry code {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--cyan);
+    display: block;
+    word-break: break-all;
+    line-height: 1.45;
+  }
+
+  /* ──────────── CLUSTER BAR CHART ──────────── */
+  .clusters {
+    background: var(--ink-2);
+    border: 1px solid var(--rule);
+    padding: 36px 40px;
+  }
+  .cluster-head {
+    display: grid;
+    grid-template-columns: 36px 160px 1fr 80px 1.2fr;
+    gap: 18px;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg-fade);
+  }
+  .cluster-row {
+    display: grid;
+    grid-template-columns: 36px 160px 1fr 80px 1.2fr;
+    gap: 18px;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px dotted var(--rule);
+    transition: background .15s ease;
+  }
+  .cluster-row:hover { background: rgba(255,182,39,.04); }
+  .cluster-row .rank {
+    font-family: var(--mono);
+    color: var(--fg-fade);
+    font-size: 12px;
+  }
+  .cluster-row .name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--paper);
+    letter-spacing: -0.01em;
+  }
+  .cluster-row .bar {
+    height: 16px;
+    background: rgba(241,233,212,.04);
+    position: relative;
+    border-left: 1px solid var(--rule);
+  }
+  .cluster-row .bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--amber-deep), var(--amber));
+    position: relative;
+    transform-origin: left;
+    animation: bargrow 1.2s cubic-bezier(.2,.7,.1,1) both;
+  }
+  .cluster-row .bar .fill::after {
+    content: attr(data-n);
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  @keyframes bargrow { from { transform: scaleX(0); } }
+  .cluster-row .coh {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--cyan);
+    text-align: right;
+  }
+  .cluster-row .role {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--fg);
+  }
+  .cluster-row.peak .name { color: var(--amber); }
+  .cluster-row.peak .coh { color: var(--amber); }
+
+  /* ──────────── READING PATH TIMELINE ──────────── */
+  .path {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+  }
+  .step {
+    padding: 32px 28px 36px;
+    background: var(--ink-2);
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .step:last-child { border-right: 0; }
+  .step .num {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 280;
+    font-size: 68px;
+    color: var(--amber);
+    line-height: .8;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .step .num span {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-mute);
+    font-style: normal;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .step h6 {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--paper);
+    margin: 0 0 14px;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .step .path-file {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--cyan);
+    background: rgba(111,225,240,.05);
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    border-left: 2px solid var(--cyan);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .step p {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--fg);
+    margin: 0;
+  }
+  .step p em {
+    font-style: italic;
+    color: var(--amber);
+    font-family: var(--serif);
+  }
+
+  /* ──────────── FOOTER ──────────── */
+  .colophon {
+    margin-top: 96px;
+    padding: 36px 0 0;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+  .colophon .right { text-align: right; }
+  .colophon strong {
+    display: block;
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--paper);
+    font-size: 16px;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+
+  /* ──────────── RESPONSIVE ──────────── */
+  @media (max-width: 960px) {
+    .stage { padding: 32px 22px 80px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-side { text-align: left; flex-direction: row; flex-wrap: wrap; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stats .cell:nth-child(2) { border-right: 0; }
+    .stats .cell:nth-child(1), .stats .cell:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .sect-head { grid-template-columns: 1fr; gap: 12px; }
+    .sect-num { font-size: 64px; }
+    .sect-title { font-size: 30px; }
+    .triad, .twin, .entries, .path { grid-template-columns: 1fr; }
+    .triad .card, .panel, .entry, .step { border-right: 0; border-bottom: 1px solid var(--rule); }
+    .triad .card:last-child, .entry:last-child, .step:last-child { border-bottom: 0; }
+    .tree-grid { grid-template-columns: 1fr; }
+    .plat-bands { grid-template-columns: 1fr; }
+    .band-label { text-align: left; border-right: 0; border-bottom: 1px solid var(--rule); padding: 0 0 8px; }
+    .compare { grid-template-columns: 1fr; }
+    .compare .vs { padding: 14px; }
+    .cluster-head, .cluster-row { grid-template-columns: 28px 110px 1fr 60px; }
+    .cluster-head .colE, .cluster-row .role { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ─── TOPBAR ─── -->
+  <div class="topbar">
+    <div><span class="blink"></span>Live document · indexed by GitNexus</div>
+    <div><span class="id">DOSSIER № 01</span> · 2026.05</div>
+  </div>
+
+  <!-- ─── HERO ─── -->
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Architecture Dossier &nbsp;//&nbsp; Monorepo Postmortem</div>
+      <h1>Ai<span class="ital">To</span>Earn.</h1>
+      <p class="lede">一个 AI Agent 驱动的内容发布与变现操作系统 —— 把 13 个内容平台、一套 MCP 网关、两条物理通道，缝合进一段 Claude 风格的对话里。</p>
+    </div>
+    <aside class="hero-side">
+      <div class="ticket">REPO<strong>yikart/AiToEarn</strong></div>
+      <div class="ticket">STACK<strong>NestJS · Next.js · Electron</strong></div>
+      <div class="ticket">SHAPE<strong>Monorepo / 3 deployables</strong></div>
+    </aside>
+  </header>
+
+  <!-- ─── STATS STRIP ─── -->
+  <div class="stats">
+    <div class="cell">
+      <div class="label">Symbols indexed</div>
+      <div class="num">28,709</div>
+    </div>
+    <div class="cell">
+      <div class="label">Graph relations</div>
+      <div class="num">62,964</div>
+    </div>
+    <div class="cell">
+      <div class="label">Execution flows</div>
+      <div class="num">300</div>
+    </div>
+    <div class="cell">
+      <div class="label">Channels reached</div>
+      <div class="num">13<span class="unit">platforms</span></div>
+    </div>
+  </div>
+
+  <!-- ─── § I. MASTERPLAN ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">I<small>§ Masterplan</small></div>
+      <div>
+        <h2 class="sect-title">一图看懂 — <em>Agent 在中间，平台在两边。</em></h2>
+        <p class="sect-kicker">前端 Chat 把意图发给 Agent；Agent 通过 MCP 调用后端工具；后端按平台分流 —— 有 API 的走云端 Provider，没 API 的走桌面端 Cookie 通道。</p>
+      </div>
+    </div>
+
+    <div class="masterplan">
+      <svg viewBox="0 0 1280 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AiToEarn 架构总图">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#ffb627"/>
+          </marker>
+          <marker id="arrCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6fe1f0"/>
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(241,233,212,0.04)" stroke-width="1"/>
+          </pattern>
+          <linearGradient id="backendBg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1d1913"/>
+            <stop offset="100%" stop-color="#15120d"/>
+          </linearGradient>
+        </defs>
+
+        <!-- grid bg -->
+        <rect width="1280" height="760" fill="url(#grid)"/>
+
+        <!-- ============ TOP LAYER: CLIENTS ============ -->
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="#9a8f74" letter-spacing="2">
+          <text x="50" y="55">CLIENT LAYER · L1</text>
+        </g>
+
+        <!-- Web -->
+        <g transform="translate(60,70)">
+          <rect width="320" height="120" fill="#15120d" stroke="#ffb627" stroke-width="1.5"/>
+          <text x="20" y="32" font-family="Fraunces, serif" font-size="22" fill="#f3ead4" font-style="italic">aitoearn-web</text>
+          <text x="20" y="52" font-family="JetBrains Mono, monospace" font-size="10" fill="#ffb627" letter-spacing="1.5">NEXT.JS · APP ROUTER · I18N</text>
+          <line x1="20" y1="64" x2="300" y2="64" stroke="#2c261c"/>
+          <text x="20" y="84" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">Claude 风格 Chat UI</text>
+          <text x="20" y="102" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">SSE 流 + 工具调用卡片</text>
+        </g>
+
+        <!-- Electron -->
+        <g transform="translate(400,70)">
+          <rect width="320" height="120" fill="#15120d" stroke="#ffb627" stroke-width="1.5"/>
+          <text x="20" y="32" font-family="Fraunces, serif" font-size="22" fill="#f3ead4" font-style="italic">aitoearn-electron</text>
+          <text x="20" y="52" font-family="JetBrains Mono, monospace" font-size="10" fill="#ffb627" letter-spacing="1.5">ELECTRON · VITE · REACT</text>
+          <line x1="20" y1="64" x2="300" y2="64" stroke="#2c261c"/>
+          <text x="20" y="84" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">国内平台 Cookie 通道</text>
+          <text x="20" y="102" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">本机 WebView / 网络请求</text>
+        </g>
+
+        <!-- External Agents -->
+        <g transform="translate(840,70)">
+          <rect width="380" height="120" fill="#15120d" stroke="#6fe1f0" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <text x="20" y="32" font-family="Fraunces, serif" font-size="22" fill="#6fe1f0" font-style="italic">External Agents</text>
+          <text x="20" y="52" font-family="JetBrains Mono, monospace" font-size="10" fill="#6fe1f0" letter-spacing="1.5">MCP CLIENTS</text>
+          <line x1="20" y1="64" x2="360" y2="64" stroke="#2c261c"/>
+          <text x="20" y="84" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">Claude / Cursor / OpenClaw</text>
+          <text x="20" y="102" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">第三方 Agent 经 MCP 接入</text>
+        </g>
+
+        <!-- ============ MIDDLE LAYER: BACKEND ============ -->
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="#9a8f74" letter-spacing="2">
+          <text x="50" y="245">SERVICE LAYER · L2 · aitoearn-backend (NestJS Nx Monorepo)</text>
+        </g>
+
+        <g transform="translate(60,260)">
+          <rect width="1160" height="220" fill="url(#backendBg)" stroke="#ffb627" stroke-width="1"/>
+
+          <!-- aitoearn-ai -->
+          <g transform="translate(30,30)">
+            <rect width="500" height="160" fill="#0f0d0a" stroke="#ffb627"/>
+            <text x="20" y="32" font-family="Fraunces, serif" font-size="20" fill="#ffb627" font-style="italic">aitoearn-ai</text>
+            <text x="20" y="52" font-family="JetBrains Mono, monospace" font-size="10" fill="#9a8f74" letter-spacing="1.5">AGENT RUNTIME</text>
+            <line x1="20" y1="62" x2="480" y2="62" stroke="#2c261c"/>
+            <text x="20" y="82" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• Claude-code-router 适配层</text>
+            <text x="20" y="102" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• AgentRuntimeService.claudeQuery</text>
+            <text x="20" y="122" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• MCP 客户端 · 内置技能 (skills/)</text>
+            <text x="20" y="142" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• 草稿生成 / 素材改写</text>
+          </g>
+
+          <!-- aitoearn-server -->
+          <g transform="translate(630,30)">
+            <rect width="500" height="160" fill="#0f0d0a" stroke="#ffb627"/>
+            <text x="20" y="32" font-family="Fraunces, serif" font-size="20" fill="#ffb627" font-style="italic">aitoearn-server</text>
+            <text x="20" y="52" font-family="JetBrains Mono, monospace" font-size="10" fill="#9a8f74" letter-spacing="1.5">BUSINESS · MCP GATEWAY</text>
+            <line x1="20" y1="62" x2="480" y2="62" stroke="#2c261c"/>
+            <text x="20" y="82" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• channel/publishing/providers × 13</text>
+            <text x="20" y="102" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• publish.mcp.controller (对外 MCP)</text>
+            <text x="20" y="122" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• account · content · credits · notify</text>
+            <text x="20" y="142" font-family="Manrope, sans-serif" font-size="12" fill="#f1e9d4">• libs/nest-mcp 自动工具注册</text>
+          </g>
+
+          <!-- RPC bridge -->
+          <g>
+            <line x1="530" y1="110" x2="630" y2="110" stroke="#ffb627" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="630" y1="118" x2="530" y2="118" stroke="#ffb627" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="555" y="100" font-family="JetBrains Mono, monospace" font-size="9" fill="#9a8f74" letter-spacing="1">RPC · *-client lib</text>
+          </g>
+        </g>
+
+        <!-- ============ ARROWS TO BACKEND ============ -->
+        <!-- web -> backend -->
+        <line x1="220" y1="190" x2="220" y2="258" stroke="#ffb627" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="228" y="225" font-family="JetBrains Mono, monospace" font-size="9" fill="#9a8f74" letter-spacing="1">HTTP · SSE</text>
+        <!-- electron -> backend -->
+        <line x1="560" y1="190" x2="560" y2="258" stroke="#ffb627" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="568" y="225" font-family="JetBrains Mono, monospace" font-size="9" fill="#9a8f74" letter-spacing="1">HTTP</text>
+        <!-- external agents -> server (mcp) -->
+        <line x1="1030" y1="190" x2="1030" y2="258" stroke="#6fe1f0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrCyan)"/>
+        <text x="1040" y="225" font-family="JetBrains Mono, monospace" font-size="9" fill="#6fe1f0" letter-spacing="1">MCP</text>
+
+        <!-- ============ BOTTOM LAYER: PLATFORMS ============ -->
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="#9a8f74" letter-spacing="2">
+          <text x="50" y="535">CHANNEL LAYER · L3</text>
+        </g>
+
+        <!-- Backend -> 海外平台 -->
+        <line x1="730" y1="480" x2="930" y2="556" stroke="#ffb627" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="780" y="525" font-family="JetBrains Mono, monospace" font-size="9" fill="#ffb627" letter-spacing="1">OPEN API</text>
+
+        <!-- Electron -> 国内平台 (从顶层 Electron 跳到底部国内平台) -->
+        <path d="M 720 130 Q 1240 130 1240 580 L 950 580" fill="none" stroke="#c44a2c" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+        <text x="1190" y="380" font-family="JetBrains Mono, monospace" font-size="9" fill="#c44a2c" letter-spacing="1" transform="rotate(90 1190 380)">COOKIE</text>
+
+        <!-- 海外 platforms -->
+        <g transform="translate(60,550)">
+          <rect width="800" height="180" fill="#15120d" stroke="#2c261c"/>
+          <text x="20" y="28" font-family="Fraunces, serif" font-size="18" fill="#f3ead4" font-style="italic">海外 · Open API</text>
+          <text x="20" y="44" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#9a8f74" letter-spacing="1.5">channel/publishing/providers/</text>
+
+          <g font-family="Manrope, sans-serif" font-size="11" font-weight="600">
+            <g transform="translate(20,68)"><rect width="100" height="26" fill="#FF3D3D" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">YouTube</text></g>
+            <g transform="translate(130,68)"><rect width="100" height="26" fill="#25F4EE" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#0f0d0a">TikTok</text></g>
+            <g transform="translate(240,68)"><rect width="100" height="26" fill="#E4405F" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">Instagram</text></g>
+            <g transform="translate(350,68)"><rect width="100" height="26" fill="#1877F2" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">Facebook</text></g>
+            <g transform="translate(460,68)"><rect width="100" height="26" fill="#1d1913" rx="13" stroke="#f1e9d4"/><text x="50" y="17" text-anchor="middle" fill="#f1e9d4">Twitter / X</text></g>
+            <g transform="translate(570,68)"><rect width="100" height="26" fill="#1d1913" rx="13" stroke="#c2c2c2"/><text x="50" y="17" text-anchor="middle" fill="#c2c2c2">Threads</text></g>
+            <g transform="translate(680,68)"><rect width="100" height="26" fill="#0A66C2" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">LinkedIn</text></g>
+            <g transform="translate(20,104)"><rect width="100" height="26" fill="#E60023" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">Pinterest</text></g>
+            <g transform="translate(130,104)"><rect width="100" height="26" fill="#4285F4" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">G-Business</text></g>
+            <g transform="translate(240,104)"><rect width="100" height="26" fill="#07C160" rx="13"/><text x="50" y="17" text-anchor="middle" fill="#fff">微信公众号</text></g>
+          </g>
+          <text x="20" y="160" font-family="Fraunces, serif" font-style="italic" font-size="12" fill="#9a8f74">10 个走云端 API · 后端 Provider 适配</text>
+        </g>
+
+        <!-- 国内 platforms -->
+        <g transform="translate(880,550)">
+          <rect width="340" height="180" fill="#15120d" stroke="#2c261c"/>
+          <text x="20" y="28" font-family="Fraunces, serif" font-size="18" fill="#f3ead4" font-style="italic">国内 · Cookie</text>
+          <text x="20" y="44" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#9a8f74" letter-spacing="1.5">electron/plat/</text>
+
+          <g font-family="Manrope, sans-serif" font-size="11" font-weight="600">
+            <g transform="translate(20,68)"><rect width="90" height="26" fill="#FE2C55" rx="13"/><text x="45" y="17" text-anchor="middle" fill="#fff">抖音</text></g>
+            <g transform="translate(120,68)"><rect width="90" height="26" fill="#FF6A00" rx="13"/><text x="45" y="17" text-anchor="middle" fill="#fff">快手</text></g>
+            <g transform="translate(220,68)"><rect width="90" height="26" fill="#00A1D6" rx="13"/><text x="45" y="17" text-anchor="middle" fill="#fff">B 站</text></g>
+            <g transform="translate(20,104)"><rect width="90" height="26" fill="#FF2442" rx="13"/><text x="45" y="17" text-anchor="middle" fill="#fff">小红书</text></g>
+            <g transform="translate(120,104)"><rect width="90" height="26" fill="#07C160" rx="13"/><text x="45" y="17" text-anchor="middle" fill="#fff">视频号</text></g>
+          </g>
+          <text x="20" y="160" font-family="Fraunces, serif" font-style="italic" font-size="12" fill="#c44a2c">必须本机登录 · 桌面端通道</text>
+        </g>
+
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─── § II. THREE DEPLOYABLES ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">II<small>§ Three deployables</small></div>
+      <div>
+        <h2 class="sect-title">三个可独立部署的子工程</h2>
+        <p class="sect-kicker">仓库根目录 <code style="font-family:var(--mono);color:var(--cyan)">project/</code> 下三个并列子项目 —— 各自有完整构建产物、独立的 Dockerfile / 打包脚本。</p>
+      </div>
+    </div>
+
+    <div class="triad">
+      <article class="card">
+        <div class="role">Service · Backend</div>
+        <span class="pill">Nx Monorepo</span>
+        <h3>aitoearn-backend</h3>
+        <div class="tech">NestJS · pnpm · MongoDB · Redis</div>
+        <p class="desc">业务主服务 + AI Agent 子服务。两个 app 独立部署，靠 client lib 互调。横切能力（鉴权 / 队列 / OSS / MCP）抽到 libs。</p>
+        <div class="tree">
+          <div class="root">aitoearn-backend/</div>
+          <div>├─ apps/</div>
+          <div>│ &nbsp;├─ <span class="hi">aitoearn-server</span></div>
+          <div>│ &nbsp;└─ <span class="hi">aitoearn-ai</span></div>
+          <div>├─ libs/ &nbsp;<span style="color:var(--fg-fade)">× 16</span></div>
+          <div>└─ docker-compose.yml</div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="role">Client · Web</div>
+        <span class="pill">Next.js 15</span>
+        <h3>aitoearn-web</h3>
+        <div class="tech">Next.js · App Router · i18n · Tailwind</div>
+        <p class="desc">Web 控制台。核心是 <code style="font-family:var(--mono);font-size:12px;color:var(--cyan)">chat/[taskId]</code> 路由 —— 用户跟 Agent 对话，所有业务能力以工具卡片形式被调起。</p>
+        <div class="tree">
+          <div class="root">aitoearn-web/src/</div>
+          <div>├─ app/[lng]/ &nbsp;<span style="color:var(--fg-fade)">i18n route</span></div>
+          <div>│ &nbsp;└─ <span class="hi">chat/[taskId]/</span></div>
+          <div>├─ components/Chat/</div>
+          <div>├─ store/<span class="hi">agent/</span></div>
+          <div>└─ api/ &nbsp;hooks/ &nbsp;lib/</div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="role">Client · Desktop</div>
+        <span class="pill">Auto-update</span>
+        <h3>aitoearn-electron</h3>
+        <div class="tech">Electron · Vite · React · Tailwind</div>
+        <p class="desc">桌面客户端。承担「必须本机登陆」的国内平台 —— 小红书 / 视频号 / 抖音 / 快手 / B 站走 Cookie 通道，海外平台让服务端处理。</p>
+        <div class="tree">
+          <div class="root">aitoearn-electron/</div>
+          <div>├─ electron/main/</div>
+          <div>├─ electron/<span class="hi">plat/</span> &nbsp;<span style="color:var(--fg-fade)">国内平台</span></div>
+          <div>├─ electron/preload/</div>
+          <div>├─ src/ &nbsp;<span style="color:var(--fg-fade)">React UI</span></div>
+          <div>└─ electron-builder.json</div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─── § III. BACKEND ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">III<small>§ Backend deep-dive</small></div>
+      <div>
+        <h2 class="sect-title">后端 — <em>两个进程，一条 MCP 总线。</em></h2>
+        <p class="sect-kicker">把 AI Agent 和业务接口拆成两个独立进程：让 <code style="font-family:var(--mono);color:var(--cyan)">aitoearn-ai</code> 可以重启不影响业务，让 <code style="font-family:var(--mono);color:var(--cyan)">aitoearn-server</code> 单独水平扩展。</p>
+      </div>
+    </div>
+
+    <div class="twin">
+      <article class="panel">
+        <span class="tag">App · 01</span>
+        <h4>aitoearn-ai</h4>
+        <div class="sub">Agent Runtime — Claude-code-router × MCP</div>
+        <p>跑「自家 Agent」的子服务。把 Claude 的 prompt / tool-use 协议接进来，挂载 MCP 客户端调用 server 暴露的工具。<code style="font-family:var(--mono);color:var(--cyan);font-size:12.5px">core/agent/</code> 是入口。</p>
+        <ul>
+          <li><code>services/agent-runtime.service.ts</code> · claudeQuery 主循环</li>
+          <li><code>claude-code-router/</code> · Claude Code 协议适配</li>
+          <li><code>mcp/</code> · subtitle、素材等内置工具</li>
+          <li><code>skills/</code> · 预置 prompt 技能</li>
+          <li><code>draft-generation</code> · <code>material-adaptation</code></li>
+        </ul>
+      </article>
+
+      <article class="panel">
+        <span class="tag">App · 02</span>
+        <h4>aitoearn-server</h4>
+        <div class="sub">Business core — 13 Provider × MCP Gateway</div>
+        <p>业务主服务。所有「写到平台上去」的能力住在 <code style="font-family:var(--mono);color:var(--cyan);font-size:12.5px">core/channel/</code>，每个平台一个 Provider 类，全部继承 <code style="font-family:var(--mono);color:var(--cyan);font-size:12.5px">base.service.ts</code>。</p>
+        <ul>
+          <li><code>channel/publishing/providers/</code> · 13 个平台 Service</li>
+          <li><code>publish.mcp.controller.ts</code> · 对外 MCP 网关</li>
+          <li><code>account / content / credits / notification</code></li>
+          <li><code>unified-mcp / api-key / fingerprint</code></li>
+          <li><code>relay / short-link / publish-record / tools</code></li>
+        </ul>
+      </article>
+    </div>
+
+    <!-- channel/ tree -->
+    <div class="channel-tree">
+      <h5>核心模块 · <em style="font-style:italic;color:var(--amber)">channel/</em></h5>
+      <div class="crumb">project / aitoearn-backend / apps / aitoearn-server / src / core / channel /</div>
+
+      <div class="tree-grid">
+        <div class="tree-col">
+          <h6>Publishing</h6>
+          <ul>
+            <li class="star">providers/<small>每平台一个 Service，13 个</small></li>
+            <li>publish.controller.ts<small>HTTP 入口</small></li>
+            <li>publish.service.ts<small>编排逻辑</small></li>
+            <li>publish.dto.ts</li>
+            <li>publish-response.vo.ts</li>
+          </ul>
+        </div>
+        <div class="tree-col">
+          <h6>MCP Surface</h6>
+          <ul>
+            <li class="star">publish.mcp.controller.ts<small>把发布暴露给外部 Agent</small></li>
+            <li>publish.mcp.module.ts</li>
+            <li>publish-mcp.schema.ts<small>工具 Schema 定义</small></li>
+          </ul>
+        </div>
+        <div class="tree-col">
+          <h6>Data / Engagement</h6>
+          <ul>
+            <li>platforms/<small>平台元数据</small></li>
+            <li>interact/<small>评论 · 回复</small></li>
+            <li>engagement/<small>互动量</small></li>
+            <li>data-cube/<small>报表回流</small></li>
+            <li>internal/ · libs/ · common.ts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- platform chips -->
+    <div class="plat-section">
+      <h5>13 个平台 · <em>三条通道</em></h5>
+      <p class="cap">同一套 <code style="font-family:var(--mono);color:var(--cyan);font-size:13px">BasePublishService</code> 抽象，按"能否拿到 OAuth + API"的现实分流到三条物理通道。</p>
+
+      <div class="plat-bands">
+        <div class="band-label"><strong>海外 · API</strong>OPEN PLATFORMS</div>
+        <div class="band-row">
+          <span class="chip youtube"><span class="dot"></span>YouTube</span>
+          <span class="chip tiktok"><span class="dot"></span>TikTok</span>
+          <span class="chip instagram"><span class="dot"></span>Instagram</span>
+          <span class="chip facebook"><span class="dot"></span>Facebook</span>
+          <span class="chip threads"><span class="dot"></span>Threads</span>
+          <span class="chip twitter"><span class="dot"></span>Twitter / X</span>
+          <span class="chip linkedin"><span class="dot"></span>LinkedIn</span>
+          <span class="chip pinterest"><span class="dot"></span>Pinterest</span>
+          <span class="chip gbusiness"><span class="dot"></span>Google Business</span>
+        </div>
+      </div>
+
+      <div class="plat-bands">
+        <div class="band-label"><strong>微信</strong>OPEN BUT SPECIAL</div>
+        <div class="band-row">
+          <span class="chip wxgzh"><span class="dot"></span>微信公众号</span>
+        </div>
+      </div>
+
+      <div class="plat-bands">
+        <div class="band-label"><strong>国内 · Cookie</strong>DESKTOP-ONLY</div>
+        <div class="band-row">
+          <span class="chip douyin"><span class="dot"></span>抖音</span>
+          <span class="chip kwai"><span class="dot"></span>快手</span>
+          <span class="chip bilibili"><span class="dot"></span>哔哩哔哩</span>
+          <span class="chip xhs"><span class="dot"></span>小红书</span>
+          <span class="chip shipinhao"><span class="dot"></span>视频号</span>
+        </div>
+      </div>
+
+      <div class="libs">
+        <h5>libs/ 横切能力</h5>
+        <div class="libs-cloud">
+          <span class="lib hi">nest-mcp</span>
+          <span class="lib hi">aitoearn-server-client</span>
+          <span class="lib hi">aitoearn-ai-client</span>
+          <span class="lib">aitoearn-auth</span>
+          <span class="lib">aitoearn-queue</span>
+          <span class="lib">mongodb</span>
+          <span class="lib">redis</span>
+          <span class="lib">redlock</span>
+          <span class="lib">channel-db</span>
+          <span class="lib">ali-oss</span>
+          <span class="lib">aws-s3</span>
+          <span class="lib">ali-sms</span>
+          <span class="lib">mail</span>
+          <span class="lib">common</span>
+          <span class="lib">helpers</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── § IV. WEB ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">IV<small>§ Web client</small></div>
+      <div>
+        <h2 class="sect-title">前端 — <em>所有功能藏在一个对话框里。</em></h2>
+        <p class="sect-kicker">索引里前 20 条执行流几乎全部围绕 <code style="font-family:var(--mono);color:var(--cyan)">ChatDetailPage</code> → <code style="font-family:var(--mono);color:var(--cyan)">ParseClaudePrompt</code> → <code style="font-family:var(--mono);color:var(--cyan)">handleToolCallComplete</code>。账号绑定、内容发布、通知都是 Agent 调起的"工具卡片"，没有传统表单页。</p>
+      </div>
+    </div>
+
+    <div class="channel-tree">
+      <h5>store/<em style="color:var(--amber);font-style:italic">agent/</em> · Web 端 Agent 状态机</h5>
+      <div class="crumb">project / aitoearn-web / src / store / agent /</div>
+
+      <div class="tree-grid">
+        <div class="tree-col">
+          <h6>Entry</h6>
+          <ul>
+            <li class="star">agent.methods.ts<small>createStoreMethods (48–630)</small></li>
+            <li>handlers/action.handlers.ts<small>工具动作派发</small></li>
+          </ul>
+        </div>
+        <div class="tree-col">
+          <h6>Task Instance</h6>
+          <ul>
+            <li class="star">sse.handler.ts<small>handleStreamEvent — SSE 流解析</small></li>
+            <li class="star">workflow.handler.ts<small>handleToolCallComplete — 工具调用 / 工作流</small></li>
+          </ul>
+        </div>
+        <div class="tree-col">
+          <h6>Components</h6>
+          <ul>
+            <li>ChatMessage/<small>消息渲染</small></li>
+            <li>ChatMessage/PluginPublishCard<small>发布工具卡片</small></li>
+            <li>ActionCard/<small>Agent 操作卡片</small></li>
+            <li>ChannelManager/<small>账号管理弹窗</small></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── § V. ELECTRON vs BACKEND ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">V<small>§ The split</small></div>
+      <div>
+        <h2 class="sect-title">桌面端为什么存在 — <em>一个工程取舍。</em></h2>
+        <p class="sect-kicker">小红书、视频号没有公开发布 API；抖音、快手、B站的 API 也覆盖不全。这些平台必须真人浏览器登陆。所以同一套 Agent 能力，被刻意切成两条物理通道。</p>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="side">
+        <div class="ctx">CHANNEL · 桌面端通道</div>
+        <h5>aitoearn-electron / plat/</h5>
+        <div class="note">必须本机 Cookie / WebView 才能上传</div>
+        <p>用户登录后 Cookie 留在本机，桌面端进程直接模拟浏览器请求平台。这些平台<strong style="color:var(--amber)">不在后端 providers/ 里</strong>。</p>
+        <div class="chip-rack">
+          <span class="chip douyin"><span class="dot"></span>抖音</span>
+          <span class="chip kwai"><span class="dot"></span>快手</span>
+          <span class="chip bilibili"><span class="dot"></span>哔哩哔哩</span>
+          <span class="chip xhs"><span class="dot"></span>小红书</span>
+          <span class="chip shipinhao"><span class="dot"></span>视频号</span>
+        </div>
+      </div>
+
+      <div class="vs">vs.</div>
+
+      <div class="side">
+        <div class="ctx">CHANNEL · 云端 API 通道</div>
+        <h5>aitoearn-server / providers/</h5>
+        <div class="note">有 OAuth + 开放 API，服务端直发</div>
+        <p>海外平台普遍提供 Open API；微信公众号虽在国内但也走 API。这些平台<strong style="color:var(--amber)">不在 electron/plat/ 里</strong>。</p>
+        <div class="chip-rack">
+          <span class="chip youtube"><span class="dot"></span>YouTube</span>
+          <span class="chip tiktok"><span class="dot"></span>TikTok</span>
+          <span class="chip instagram"><span class="dot"></span>Instagram</span>
+          <span class="chip facebook"><span class="dot"></span>Facebook</span>
+          <span class="chip threads"><span class="dot"></span>Threads</span>
+          <span class="chip twitter"><span class="dot"></span>X</span>
+          <span class="chip linkedin"><span class="dot"></span>LinkedIn</span>
+          <span class="chip pinterest"><span class="dot"></span>Pinterest</span>
+          <span class="chip gbusiness"><span class="dot"></span>Google Business</span>
+          <span class="chip wxgzh"><span class="dot"></span>微信公众号</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── § VI. ENTRY POINTS ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">VI<small>§ How to reach it</small></div>
+      <div>
+        <h2 class="sect-title">5 个入口 — <em>同一套能力，5 种触达。</em></h2>
+        <p class="sect-kicker">所有发布工具同时以 HTTP 和 MCP 两种协议外抛，所以 Claude / Cursor / OpenClaw 等外部 Agent 不用对接 SDK，直接走 MCP 就能用。</p>
+      </div>
+    </div>
+
+    <div class="entries">
+      <div class="entry">
+        <div class="idx">01</div>
+        <h6>网页直接用</h6>
+        <p>面向终端用户的零部署入口</p>
+        <code>aitoearn-web</code>
+      </div>
+      <div class="entry">
+        <div class="idx">02</div>
+        <h6>Docker 私有部署</h6>
+        <p>团队私有化，附 nginx</p>
+        <code>docker-compose.yml</code>
+      </div>
+      <div class="entry">
+        <div class="idx">03</div>
+        <h6>MCP 协议接入</h6>
+        <p>Claude / Cursor / OpenClaw 直接调</p>
+        <code>publish.mcp.controller.ts<br>libs/nest-mcp</code>
+      </div>
+      <div class="entry">
+        <div class="idx">04</div>
+        <h6>OpenClaw 龙虾</h6>
+        <p>走 MCP / API Key 集成</p>
+        <code>API Key + MCP</code>
+      </div>
+      <div class="entry">
+        <div class="idx">05</div>
+        <h6>桌面客户端</h6>
+        <p>含国内平台 Cookie 通道</p>
+        <code>aitoearn-electron</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── § VII. CLUSTERS ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">VII<small>§ Functional clusters</small></div>
+      <div>
+        <h2 class="sect-title">功能聚类 — <em>GitNexus 自动分组 Top 20</em></h2>
+        <p class="sect-kicker">按照符号间的调用 / 引用关系做社区检测。条形长度 = 符号数；右列百分比 = 内聚度（越高越独立、可单独维护）。</p>
+      </div>
+    </div>
+
+    <div class="clusters">
+      <div class="cluster-head">
+        <div>#</div>
+        <div>Module</div>
+        <div>Symbols</div>
+        <div>Cohesion</div>
+        <div class="colE">Role</div>
+      </div>
+
+      <div class="cluster-row peak">
+        <div class="rank">01</div>
+        <div class="name">Ui</div>
+        <div class="bar"><div class="fill" data-n="274" style="width:100%; animation-delay:.05s"></div></div>
+        <div class="coh">71%</div>
+        <div class="role">Web UI 组件总集</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">02</div>
+        <div class="name">Youtube</div>
+        <div class="bar"><div class="fill" data-n="163" style="width:59.5%; animation-delay:.10s"></div></div>
+        <div class="coh">63%</div>
+        <div class="role">YouTube 平台适配</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">03</div>
+        <div class="name">Tiktok</div>
+        <div class="bar"><div class="fill" data-n="126" style="width:46.0%; animation-delay:.15s"></div></div>
+        <div class="coh">70%</div>
+        <div class="role">TikTok 平台适配</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">04</div>
+        <div class="name">Douyin</div>
+        <div class="bar"><div class="fill" data-n="114" style="width:41.6%; animation-delay:.20s"></div></div>
+        <div class="coh">69%</div>
+        <div class="role">抖音平台适配</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">05</div>
+        <div class="name">Providers</div>
+        <div class="bar"><div class="fill" data-n="89" style="width:32.5%; animation-delay:.25s"></div></div>
+        <div class="coh">72%</div>
+        <div class="role">Provider 公共抽象</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">06</div>
+        <div class="name">User</div>
+        <div class="bar"><div class="fill" data-n="81" style="width:29.6%; animation-delay:.30s"></div></div>
+        <div class="coh">71%</div>
+        <div class="role">用户域</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">07</div>
+        <div class="name">Components</div>
+        <div class="bar"><div class="fill" data-n="81" style="width:29.6%; animation-delay:.35s"></div></div>
+        <div class="coh">67%</div>
+        <div class="role">通用组件</div>
+      </div>
+      <div class="cluster-row peak">
+        <div class="rank">08</div>
+        <div class="name">Task</div>
+        <div class="bar"><div class="fill" data-n="69" style="width:25.2%; animation-delay:.40s"></div></div>
+        <div class="coh">76%</div>
+        <div class="role">任务调度</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">09</div>
+        <div class="name">Account</div>
+        <div class="bar"><div class="fill" data-n="67" style="width:24.5%; animation-delay:.45s"></div></div>
+        <div class="coh">64%</div>
+        <div class="role">账号绑定</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">10</div>
+        <div class="name">Tools</div>
+        <div class="bar"><div class="fill" data-n="62" style="width:22.6%; animation-delay:.50s"></div></div>
+        <div class="coh">56%</div>
+        <div class="role">Agent 工具集</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">11</div>
+        <div class="name">Services</div>
+        <div class="bar"><div class="fill" data-n="61" style="width:22.3%; animation-delay:.55s"></div></div>
+        <div class="coh">65%</div>
+        <div class="role">通用服务</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">12</div>
+        <div class="name">Twitter</div>
+        <div class="bar"><div class="fill" data-n="56" style="width:20.4%; animation-delay:.60s"></div></div>
+        <div class="coh">61%</div>
+        <div class="role">Twitter / X 适配</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">13</div>
+        <div class="name">Kwai</div>
+        <div class="bar"><div class="fill" data-n="53" style="width:19.3%; animation-delay:.65s"></div></div>
+        <div class="coh">71%</div>
+        <div class="role">快手适配</div>
+      </div>
+      <div class="cluster-row peak">
+        <div class="rank">14</div>
+        <div class="name">Meta</div>
+        <div class="bar"><div class="fill" data-n="52" style="width:19.0%; animation-delay:.70s"></div></div>
+        <div class="coh">73%</div>
+        <div class="role">FB / IG / Threads 共用</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">15</div>
+        <div class="name">Task-instance</div>
+        <div class="bar"><div class="fill" data-n="52" style="width:19.0%; animation-delay:.75s"></div></div>
+        <div class="coh">69%</div>
+        <div class="role">任务运行实例</div>
+      </div>
+      <div class="cluster-row peak">
+        <div class="rank">16</div>
+        <div class="name">Content</div>
+        <div class="bar"><div class="fill" data-n="51" style="width:18.6%; animation-delay:.80s"></div></div>
+        <div class="coh">77%</div>
+        <div class="role">内容域</div>
+      </div>
+      <div class="cluster-row peak">
+        <div class="rank">17</div>
+        <div class="name">Mcp</div>
+        <div class="bar"><div class="fill" data-n="47" style="width:17.1%; animation-delay:.85s"></div></div>
+        <div class="coh">79%</div>
+        <div class="role">MCP 协议适配</div>
+      </div>
+      <div class="cluster-row peak">
+        <div class="rank">18</div>
+        <div class="name">Bilibili</div>
+        <div class="bar"><div class="fill" data-n="46" style="width:16.8%; animation-delay:.90s"></div></div>
+        <div class="coh">80%</div>
+        <div class="role">B 站适配 · 最高内聚</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">19</div>
+        <div class="name">Agent</div>
+        <div class="bar"><div class="fill" data-n="42" style="width:15.3%; animation-delay:.95s"></div></div>
+        <div class="coh">62%</div>
+        <div class="role">Agent 主流程</div>
+      </div>
+      <div class="cluster-row">
+        <div class="rank">20</div>
+        <div class="name">Repositories</div>
+        <div class="bar"><div class="fill" data-n="39" style="width:14.2%; animation-delay:1s"></div></div>
+        <div class="coh">69%</div>
+        <div class="role">数据访问层</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── § VIII. READING PATH ─── -->
+  <section>
+    <div class="sect-head">
+      <div class="sect-num">VIII<small>§ Reading path</small></div>
+      <div>
+        <h2 class="sect-title">建议的二次阅读顺序</h2>
+        <p class="sect-kicker">从契约 → Agent → 前端 → 桌面端。先建立"调用平台的统一抽象"心智，再看 Agent 怎么用它，最后理解物理拓扑。</p>
+      </div>
+    </div>
+
+    <div class="path">
+      <div class="step">
+        <div class="num">i<span>STEP 01</span></div>
+        <h6>读 Provider 统一契约</h6>
+        <div class="path-file">aitoearn-backend/apps/aitoearn-server/src/core/channel/publishing/providers/base.service.ts</div>
+        <p>理解 <em>immediatePublish / finalizePublish</em> 等生命周期方法，是所有平台 Provider 的共同形状。</p>
+      </div>
+
+      <div class="step">
+        <div class="num">ii<span>STEP 02</span></div>
+        <h6>读 Agent 运行时</h6>
+        <div class="path-file">aitoearn-backend/apps/aitoearn-ai/src/core/agent/services/agent-runtime.service.ts</div>
+        <p>看 <em>claudeQuery (197–370)</em> 如何把 Claude 的 tool-use 协议翻译成对 MCP 工具的调用。</p>
+      </div>
+
+      <div class="step">
+        <div class="num">iii<span>STEP 03</span></div>
+        <h6>读前端流处理</h6>
+        <div class="path-file">aitoearn-web/src/store/agent/agent.methods.ts<br>+ task-instance/sse.handler.ts</div>
+        <p>看 <em>handleStreamEvent</em> 如何消费 Agent 的 SSE，并把工具调用渲染成卡片。</p>
+      </div>
+
+      <div class="step">
+        <div class="num">iv<span>STEP 04</span></div>
+        <h6>看桌面端 Cookie 通道</h6>
+        <div class="path-file">aitoearn-electron/electron/plat/*</div>
+        <p>看小红书、视频号是怎么在 <em>没有公开 API</em> 的情况下被发布上去的。架构决策落地处。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── COLOPHON ─── -->
+  <footer class="colophon">
+    <div>
+      <strong>Compiled from GitNexus index snapshot</strong>
+      Re-run <code style="font-family:var(--mono);color:var(--amber);font-size:11px">npx gitnexus analyze</code> when stale
+    </div>
+    <div class="right">
+      <strong>AiToEarn · Architecture Dossier № 01</strong>
+      Generated 2026.05 · Single-file shareable
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
